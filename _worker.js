@@ -546,19 +546,19 @@ export default {
 
       const buttons = [
         [
-          { text: '拉黑用户', callback_data: `block_${privateChatId}` },
-          { text: '解除拉黑', callback_data: `unblock_${privateChatId}` }
+          { text: '加入黑名单', callback_data: `block_${privateChatId}` },
+          { text: '移出黑名单', callback_data: `unblock_${privateChatId}` }
         ],
         [
           { text: verificationEnabled ? '关闭验证码' : '开启验证码', callback_data: `toggle_verification_${privateChatId}` },
           { text: '查询黑名单', callback_data: `check_blocklist_${privateChatId}` }
         ],
         [
-          { text: userRawEnabled ? '关闭用户Raw' : '开启用户Raw', callback_data: `toggle_user_raw_${privateChatId}` },
-          { text: 'GitHub项目', url: 'https://github.com/iawooo/ctt' }
+          { text: userRawEnabled ? '关合集地址' : '开合集地址', callback_data: `toggle_user_raw_${privateChatId}` },
+          { text: '合集地址', url: 'https://t.me/Shortcuts_Share/4' }
         ],
         [
-          { text: '删除用户', callback_data: `delete_user_${privateChatId}` }
+          { text: '删除此用户', callback_data: `delete_user_${privateChatId}` }
         ]
       ];
 
