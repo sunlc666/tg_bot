@@ -546,19 +546,16 @@ export default {
 
       const buttons = [
         [
-          { text: '加入黑名单', callback_data: `block_${privateChatId}` },
-          { text: '移出黑名单', callback_data: `unblock_${privateChatId}` }
+          { text: verificationEnabled ? '关闭验证码' : '开启验证码', callback_data: `toggle_verification_${privateChatId}` },
+          { text: userRawEnabled ? '关合集地址' : '开合集地址', callback_data: `toggle_user_raw_${privateChatId}` }
         ],
         [
-          { text: verificationEnabled ? '关闭验证码' : '开启验证码', callback_data: `toggle_verification_${privateChatId}` },
+          { text: '删除此用户', callback_data: `delete_user_${privateChatId}` },
           { text: '查询黑名单', callback_data: `check_blocklist_${privateChatId}` }
         ],
         [
-          { text: userRawEnabled ? '关合集地址' : '开合集地址', callback_data: `toggle_user_raw_${privateChatId}` },
-          { text: '合集地址', url: 'https://t.me/Shortcuts_Share/4' }
-        ],
-        [
-          { text: '删除此用户', callback_data: `delete_user_${privateChatId}` }
+          { text: '移出黑名单', callback_data: `unblock_${privateChatId}` },
+          { text: '加入黑名单', callback_data: `block_${privateChatId}` }
         ]
       ];
 
@@ -889,7 +886,7 @@ export default {
           const currentState = (await getSetting('user_raw_enabled', env.D1)) === 'true';
           const newState = !currentState;
           await setSetting('user_raw_enabled', newState.toString());
-          await sendMessageToTopic(topicId, `用户端 Raw 链接已${newState ? '开启' : '关闭'}。`);
+          await sendMessageToTopic(topicId, `用户端合集地址已${newState ? '开启' : '关闭'}。`);
         } else if (action === 'delete_user') {
           userStateCache.set(privateChatId, undefined);
           messageRateCache.set(privateChatId, undefined);
