@@ -1220,6 +1220,7 @@ export default {
       const response = await fetchWithRetry(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        parse_mode: 'markdown'
         body: JSON.stringify(requestBody)
       });
       const data = await response.json();
