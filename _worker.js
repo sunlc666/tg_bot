@@ -412,7 +412,7 @@ export default {
         }
 
         const successMessage = await getVerificationSuccessMessage();
-        await sendMessageToUser(chatId, `${successMessage}\n简单描述你的诉求，带上视图！`);
+        await sendMessageToUser(chatId, `${successMessage}\n简单描述你的来意，带上视图！`);
         const userInfo = await getUserInfo(chatId);
         await ensureUserTopic(chatId, userInfo);
         return;
@@ -817,7 +817,7 @@ export default {
             .run();
 
           const successMessage = await getVerificationSuccessMessage();
-          await sendMessageToUser(chatId, `${successMessage}\n简单描述你的诉求，带上视图！`);
+          await sendMessageToUser(chatId, `${successMessage}\n简单描述你的来意，带上视图！`);
           const userInfo = await getUserInfo(chatId);
           await ensureUserTopic(chatId, userInfo);
         } else {
