@@ -990,25 +990,12 @@ export default {
           correctCode += characters.charAt(Math.floor(Math.random() * characters.length));
         }
 
-        // 生成3个错误验证码
-        const options = new Set([correctCode]);
-        while (options.size < 4) {
-          let wrongCode = '';
-          for (let i = 0; i < 6; i++) {
-            wrongCode += characters.charAt(Math.floor(Math.random() * characters.length));
-          }
-          if (wrongCode !== correctCode) options.add(wrongCode);
-        }
-        const optionArray = Array.from(options).sort(() => Math.random() - 0.5);
+        // 生成图片验证码（使用简单的文本到图片转换）
+        const canvas = { width: 200, height: 80 }; // 模拟 Canvas
+        const imageBuffer = await generateCaptchaImage(correctCode); // 假设有一个生成图片的函数
 
-        // 创建按钮
-        const buttons = optionArray.map(option => ({
-          text: `${option}`,
-          callback_data: `verify_${chatId}_${option}_${option === correctCode ? 'correct' : 'wrong'}`
-        }));
-
-        // 验证码问题提示
-        const question = `请验证以下验证码：${correctCode}\n（点击下方按钮选择正确的验证码）`;
+        // 验证码提示
+        const question = `请查看以下验证码图片，并回复正确的验证码：`;
         const nowSeconds = Math.floor(Date.now() / 1000);
         const codeExpiry = nowSeconds + 300; // 验证码有效期5分钟
 
@@ -1023,14 +1010,16 @@ export default {
         }
         userStateCache.set(chatId, userState);
 
-        const response = await fetchWithRetry(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        // 发送验证码图片
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('photo', new Blob([imageBuffer], { type: 'image/png' }), 'captcha.png');
+        formData.append('caption', question);
+        formData.append('parse_mode', 'MarkdownV2');
+
+        const response = await fetchWithRetry(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: question,
-            reply_markup: { inline_keyboard: [buttons] }
-          })
+          body: formData
         });
         const data = await response.json();
         if (data.ok) {
@@ -1047,6 +1036,38 @@ export default {
         throw error;
       }
     }
+
+    // 模拟生成验证码图片的函数（需替换为实际实现）
+    async function generateCaptchaImage(code) {
+      // 这里需要实际的 Canvas 或外部 API 实现
+      // 以下是伪代码，需在环境中集成 Canvas 或调用图片生成服务
+      const { createCanvas } = require('canvas'); // 需安装 node-canvas 或类似库
+      const canvas = createCanvas(200, 80);
+      const ctx = canvas.getContext('2d');
+
+      // 设置背景
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // 添加干扰线
+      for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.strokeStyle = `hsl(${Math.random() * 360}, 50%, 50%)`;
+        ctx.stroke();
+      }
+
+      // 绘制验证码文本
+      ctx.font = '30px Arial';
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(code, canvas.width / 2, canvas.height / 2);
+
+      return canvas.toBuffer('image/png');
+    }
+// 验证码结尾
 
     async function checkIfAdmin(userId) {
       const response = await fetchWithRetry(`https://api.telegram.org/bot${BOT_TOKEN}/getChatMember`, {
