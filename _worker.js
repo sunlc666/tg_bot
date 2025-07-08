@@ -983,32 +983,40 @@ export default {
 
     async function sendVerification(chatId) {
       try {
-        const num1 = Math.floor(Math.random() * 10);
-        const num2 = Math.floor(Math.random() * 10);
-        const operation = Math.random() > 0.5 ? '+' : '-';
-        const correctResult = operation === '+' ? num1 + num2 : num1 - num2;
+        // 生成6位随机验证码（字母和数字混合）
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let correctCode = '';
+        for (let i = 0; i < 6; i++) {
+          correctCode += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
 
-        const options = new Set([correctResult]);
+        // 生成3个错误验证码
+        const options = new Set([correctCode]);
         while (options.size < 4) {
-          const wrongResult = correctResult + Math.floor(Math.random() * 5) - 2;
-          if (wrongResult !== correctResult) options.add(wrongResult);
+          let wrongCode = '';
+          for (let i = 0; i < 6; i++) {
+            wrongCode += characters.charAt(Math.floor(Math.random() * characters.length));
+          }
+          if (wrongCode !== correctCode) options.add(wrongCode);
         }
         const optionArray = Array.from(options).sort(() => Math.random() - 0.5);
 
+        // 创建按钮
         const buttons = optionArray.map(option => ({
-          text: `(${option})`,
-          callback_data: `verify_${chatId}_${option}_${option === correctResult ? 'correct' : 'wrong'}`
+          text: `${option}`,
+          callback_data: `verify_${chatId}_${option}_${option === correctCode ? 'correct' : 'wrong'}`
         }));
 
-        const question = `请计算：${num1} ${operation} ${num2} = ?（点击下方按钮完成验证）`;
+        // 验证码问题提示
+        const question = `请验证以下验证码：${correctCode}\n（点击下方按钮选择正确的验证码）`;
         const nowSeconds = Math.floor(Date.now() / 1000);
-        const codeExpiry = nowSeconds + 300;
+        const codeExpiry = nowSeconds + 300; // 验证码有效期5分钟
 
         let userState = userStateCache.get(chatId);
         if (userState === undefined) {
-          userState = { verification_code: correctResult.toString(), code_expiry: codeExpiry, last_verification_message_id: null, is_verifying: true };
+          userState = { verification_code: correctCode, code_expiry: codeExpiry, last_verification_message_id: null, is_verifying: true };
         } else {
-          userState.verification_code = correctResult.toString();
+          userState.verification_code = correctCode;
           userState.code_expiry = codeExpiry;
           userState.last_verification_message_id = null;
           userState.is_verifying = true;
@@ -1029,14 +1037,14 @@ export default {
           userState.last_verification_message_id = data.result.message_id.toString();
           userStateCache.set(chatId, userState);
           await env.D1.prepare('UPDATE user_states SET verification_code = ?, code_expiry = ?, last_verification_message_id = ?, is_verifying = ? WHERE chat_id = ?')
-            .bind(correctResult.toString(), codeExpiry, data.result.message_id.toString(), true, chatId)
+            .bind(correctCode, codeExpiry, data.result.message_id.toString(), true, chatId)
             .run();
         } else {
           throw new Error(`Telegram API 返回错误: ${data.description || '未知错误'}`);
         }
       } catch (error) {
         console.error(`发送验证码失败: ${error.message}`);
-        throw error; // 向上传递错误以便调用方处理
+        throw error;
       }
     }
 
