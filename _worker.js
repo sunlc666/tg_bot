@@ -395,11 +395,11 @@ export default {
               }
               return;
             } else {
-              await sendMessageToUser(chatId, `⚠️ 警告：请在完成下方验证后，重新给我发送一遍你想说的 "${text || '您的具体信息'}"，否则我可能无法看到你发送的内容。`);
+              await sendMessageToUser(chatId, `⚠️ 警告：请在完成下方验证后，重新给我发送一遍你想说的 "${text || '您的具体信息'}"，否则我将无法收到这条内容。`);
             }
             return;
           }
-          await sendMessageToUser(chatId, `⚠️ 警告：请在完成下方验证后，重新给我发送一遍你想说的 "${text || '您的具体信息'}"，否则我可能无法看到你发送的内容。`);
+          await sendMessageToUser(chatId, `⚠️ 警告：请在完成下方验证后，重新给我发送一遍你想说的 "${text || '您的具体信息'}"，否则我将无法收到这条内容。`);
           await handleVerification(chatId, messageId);
           return;
         }
