@@ -1041,9 +1041,10 @@ export default {
     async function generateCaptchaImage(code) {
       // 这里需要实际的 Canvas 或外部 API 实现
       // 以下是伪代码，需在环境中集成 Canvas 或调用图片生成服务
-      const { createCanvas } = require('canvas'); // 需安装 node-canvas 或类似库
-      const canvas = createCanvas(200, 80);
-      const ctx = canvas.getContext('2d');
+      async function generateCaptchaImage(code) {
+          const svg = `...`;
+          return new TextEncoder().encode(svg);
+      }
 
       // 设置背景
       ctx.fillStyle = '#ffffff';
