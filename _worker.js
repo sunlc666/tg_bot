@@ -7,6 +7,8 @@ const CLEANUP_INTERVAL = 24 * 60 * 60 * 1000; // 24 小时
 let isInitialized = false;
 const processedMessages = new Set();
 const processedCallbacks = new Set();
+// 临时保存待转发的用户消息
+const pendingMessages = new Map();
 
 const topicCreationLocks = new Map();
 
@@ -395,11 +397,17 @@ export default {
               }
               return;
             } else {
-              await sendMessageToUser(chatId, `⚠️ 警告：请在完成下方验证后，重新给我发送一遍你想说的 "${text || '您的具体信息'}"，否则我将无法收到这条内容。`);
+              // 在触发验证前，暂存用户原始消息
+              pendingMessages.delete(chatId);
+              pendingMessages.set(chatId, message);
+              await sendMessageToUser(chatId, `⚠️ 警告：正确完成下方验证后 "${text || '您的具体信息'}" 才会被推送，否则我将无法收到这条内容。`);
             }
             return;
           }
-          await sendMessageToUser(chatId, `⚠️ 警告：请在完成下方验证后，重新给我发送一遍你想说的 "${text || '您的具体信息'}"，否则我将无法收到这条内容。`);
+          // 在触发验证前，暂存用户原始消息
+          pendingMessages.delete(chatId);
+          pendingMessages.set(chatId, message);
+          await sendMessageToUser(chatId, `⚠️ 警告：正确完成下方验证后 "${text || '您的具体信息'}" 才会被推送，否则我将无法收到这条内容。`);
           await handleVerification(chatId, messageId);
           return;
         }
@@ -824,6 +832,26 @@ export default {
           await sendMessageToUser(chatId, '验证失败，请重新尝试。');
           await handleVerification(chatId, messageId);
         }
+
+          // 验证成功后，检查是否有待转发的消息
+          const pending = pendingMessages.get(chatId);
+          if (pending) {
+            const userInfo = await getUserInfo(chatId);
+            const topicId = await ensureUserTopic(chatId, userInfo);
+
+            try {
+              if (pending.text) {
+                const formattedMessage = `${userInfo.nickname}:\n${pending.text}`;
+                await sendMessageToTopic(topicId, formattedMessage);
+              } else {
+                await copyMessageToTopic(topicId, pending);
+              }
+            } catch (err) {
+              console.error(`⚠️ 重新发送用户验证前消息失败: ${err.message}`);
+            }
+
+            pendingMessages.delete(chatId);
+          }
 
         await fetchWithRetry(`https://api.telegram.org/bot${BOT_TOKEN}/deleteMessage`, {
           method: 'POST',
