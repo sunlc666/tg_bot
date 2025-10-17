@@ -397,16 +397,20 @@ export default {
               }
               return;
             } else {
-              // 在触发验证前，暂存用户原始消息
-              pendingMessages.delete(chatId);
-              pendingMessages.set(chatId, message);
+              // 在触发验证前，暂存用户原始消息（排除命令）
+              if (!text.startsWith('/')) {
+                pendingMessages.delete(chatId);
+                pendingMessages.set(chatId, message);
+              }
               await sendMessageToUser(chatId, `⚠️ 警告：正确完成下方验证后 "${text || '您的具体信息'}" 才会被推送，否则我将无法收到这条内容。`);
             }
             return;
           }
-          // 在触发验证前，暂存用户原始消息
-          pendingMessages.delete(chatId);
-          pendingMessages.set(chatId, message);
+          // 在触发验证前，暂存用户原始消息（排除命令）
+          if (!text.startsWith('/')) {
+            pendingMessages.delete(chatId);
+            pendingMessages.set(chatId, message);
+          }
           await sendMessageToUser(chatId, `⚠️ 警告：正确完成下方验证后 "${text || '您的具体信息'}" 才会被推送，否则我将无法收到这条内容。`);
           await handleVerification(chatId, messageId);
           return;
@@ -836,20 +840,19 @@ export default {
           // 验证成功后，检查是否有待转发的消息
           const pending = pendingMessages.get(chatId);
           if (pending) {
-            const userInfo = await getUserInfo(chatId);
-            const topicId = await ensureUserTopic(chatId, userInfo);
+            const text = pending.text || '';
+            // 忽略命令类消息
+            if (!text.startsWith('/')) {
+              const userInfo = await getUserInfo(chatId);
+              const topicId = await ensureUserTopic(chatId, userInfo);
 
-            try {
-              if (pending.text) {
-                const formattedMessage = `${userInfo.nickname}:\n${pending.text}`;
+              if (text) {
+                const formattedMessage = `${userInfo.nickname}:\n${text}`;
                 await sendMessageToTopic(topicId, formattedMessage);
               } else {
                 await copyMessageToTopic(topicId, pending);
               }
-            } catch (err) {
-              console.error(`⚠️ 重新发送用户验证前消息失败: ${err.message}`);
             }
-
             pendingMessages.delete(chatId);
           }
 
