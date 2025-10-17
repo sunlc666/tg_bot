@@ -402,7 +402,7 @@ export default {
                 pendingMessages.delete(chatId);
                 pendingMessages.set(chatId, message);
               }
-              await sendMessageToUser(chatId, `⚠️ 警告：正确完成下方验证后 "${text || '您的具体信息'}" 才会被推送，否则我将无法收到这条内容。`);
+              await sendMessageToUser(chatId, `⚠️ 警告：1。`);
             }
             return;
           }
