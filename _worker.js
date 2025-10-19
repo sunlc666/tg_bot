@@ -598,14 +598,14 @@ export default {
       const userRawEnabled = (await getSetting('user_raw_enabled', env.D1)) === 'true';
       if (!userRawEnabled) return '验证成功！您现在可以与我聊天。';
 
-      const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/start.md');
+      const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/Start.md');
       if (!response.ok) return '验证成功！您现在可以与我聊天。';
       const message = await response.text();
       return message.trim() || '验证成功！您现在可以与我聊天。';
     }
 
     async function getNotificationContent() {
-      const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/notification.md');
+      const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/Notification.md');
       if (!response.ok) return '';
       const content = await response.text();
       return content.trim() || '';
