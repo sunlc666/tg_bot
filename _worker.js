@@ -629,10 +629,26 @@ export default {
     }
 
     async function getWarningContent() {
-      const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/Warning.md');
-      if (!response.ok) return '';
-      const content = await response.text();
-      return content.trim() || '';
+      try {
+        const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/Warning.md');
+        if (!response.ok) {
+          console.log('Warning.md 获取失败，HTTP 状态：', response.status);
+          return '';
+        }
+
+        const content = await response.text();
+        const cleaned = content.trim();
+
+        // 如果文件为空、全是空白或 markdown 注释符号（#、>、-、*）
+        if (!cleaned || cleaned.replace(/[#>\-\*\s]/g, '').length === 0) {
+          return '';
+        }
+
+        return cleaned;
+      } catch (e) {
+        console.log('获取 Warning.md 时出错：', e.message);
+        return '';
+      }
     }
 
     async function checkStartCommandRate(chatId) {
