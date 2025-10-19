@@ -146,6 +146,7 @@ export default {
         user_states: {
           columns: {
             chat_id: 'TEXT PRIMARY KEY',
+            last_active_date: 'TEXT',
             is_blocked: 'BOOLEAN DEFAULT FALSE',
             is_verified: 'BOOLEAN DEFAULT FALSE',
             verified_expiry: 'INTEGER',
@@ -322,6 +323,22 @@ export default {
       }
 
       const verificationEnabled = (await getSetting('verification_enabled', env.D1)) === 'true';
+
+      // 检查是否为今日首次发言
+      const today = new Date().toLocaleDateString('zh-CN', { timeZone: 'Asia/Shanghai' });
+      const lastActiveDate = userState.last_active_date || null;
+      if (lastActiveDate !== today) {
+        const warningContent = await getWarningContent();
+        if (warningContent) {
+          await sendMessageToUser(chatId, warningContent);
+        }
+
+        // 更新数据库和缓存
+        await env.D1.prepare('UPDATE user_states SET last_active_date = ? WHERE chat_id = ?')
+          .bind(today, chatId)
+          .run();
+        userStateCache.set(chatId, { ...userState, last_active_date: today });
+      }
 
       if (!verificationEnabled) {
         // 验证码关闭时，所有用户都可以直接发送消息
@@ -606,6 +623,13 @@ export default {
 
     async function getNotificationContent() {
       const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/Notification.md');
+      if (!response.ok) return '';
+      const content = await response.text();
+      return content.trim() || '';
+    }
+
+    async function getWarningContent() {
+      const response = await fetch('https://raw.githubusercontent.com/sunlc666/tg_bot/main/CFTeleTrans/Warning.md');
       if (!response.ok) return '';
       const content = await response.text();
       return content.trim() || '';
