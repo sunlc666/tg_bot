@@ -305,20 +305,34 @@ export default {
 
       let userState = userStateCache.get(chatId);
       if (userState === undefined) {
-        userState = await env.D1.prepare('SELECT is_blocked, is_first_verification, is_verified, verified_expiry, is_verifying FROM user_states WHERE chat_id = ?')
-          .bind(chatId)
-          .first();
+        userState = await env.D1.prepare(
+          'SELECT is_blocked, is_first_verification, is_verified, verified_expiry, is_verifying, last_active_date FROM user_states WHERE chat_id = ?'
+        ).bind(chatId).first();
+
         if (!userState) {
-          userState = { is_blocked: false, is_first_verification: true, is_verified: false, verified_expiry: null, is_verifying: false };
-          await env.D1.prepare('INSERT INTO user_states (chat_id, is_blocked, is_first_verification, is_verified, is_verifying) VALUES (?, ?, ?, ?, ?)')
-            .bind(chatId, false, true, false, false)
-            .run();
+          userState = {
+            is_blocked: false,
+            is_first_verification: true,
+            is_verified: false,
+            verified_expiry: null,
+            is_verifying: false,
+            last_active_date: null
+          };
+          await env.D1.prepare(
+            'INSERT INTO user_states (chat_id, is_blocked, is_first_verification, is_verified, is_verifying, last_active_date) VALUES (?, ?, ?, ?, ?, ?)'
+          ).bind(chatId, false, true, false, false, null).run();
         }
         userStateCache.set(chatId, userState);
       }
 
       if (userState.is_blocked) {
         await sendMessageToUser(chatId, "您已被拉黑，无法发送消息。请联系管理员解除拉黑。");
+        return;
+      }
+
+      // 🚫 忽略用户发的命令（以 / 开头）
+      // 不删除、不转发、不提示你，只是忽略
+      if (text.startsWith('/')) {
         return;
       }
 
@@ -333,11 +347,12 @@ export default {
           await sendMessageToUser(chatId, warningContent);
         }
 
-        // 更新数据库和缓存
+        // 更新数据库与缓存，确保同步
         await env.D1.prepare('UPDATE user_states SET last_active_date = ? WHERE chat_id = ?')
           .bind(today, chatId)
           .run();
-        userStateCache.set(chatId, { ...userState, last_active_date: today });
+        userState.last_active_date = today;
+        userStateCache.set(chatId, userState);
       }
 
       if (!verificationEnabled) {
